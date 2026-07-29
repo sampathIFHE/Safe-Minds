@@ -32,6 +32,8 @@ export class CounsellorService {
       mobile: createCounsellorDto.mobile,
       identifier: createCounsellorDto.employeeId,
       role: UserRole.COUNSELLOR,
+      firstName: createCounsellorDto.firstName,
+      lastName: createCounsellorDto.lastName,
     });
 
     const counsellor = this.counsellorRepository.create({

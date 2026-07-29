@@ -4,6 +4,8 @@ import { UserService } from 'src/user/user.service';
 import { SendOtpDto } from './dto/send-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
 import * as nodemailer from 'nodemailer';
+import { otpTemplate } from 'src/mailTemplates/otp.template';
+import { join } from 'path';
 
 
 @Injectable()
@@ -43,13 +45,20 @@ export class AuthService {
 
   await this.userService.save(user);
 
+  const logoUrl = `${process.env.APP_URL}/Safe_Minds_Logo.png`;
   await this.transporter.sendMail({
       from: `"Safe Minds" <${process.env.MAIL_USER}>`,
       to: dto.email,
-      subject: "Your OTP Code",
-      text: `Your OTP is ${otp}. It will expire in 5 minutes.`,
+      subject:  `Hello ${user.firstName} ${user.lastName}, here's your Safe Minds verification code`,
+      html: otpTemplate(`${user.firstName} ${user.lastName}`, otp, logoUrl),
+      attachments: [
+    {
+      filename: 'Safe_Minds_Logo.png',
+      path: join(process.cwd(), 'public', 'Safe_Minds_Logo.png'),
+      cid: 'safe-minds-logo',
+    },
+  ],
     });
-        console.log(`OTP ${otp} sent to ${dto.email}`);
 
   return {
     message: "OTP sent successfully",

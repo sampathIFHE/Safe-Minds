@@ -4,27 +4,41 @@ import { UpdateCounsellorDto } from './dto/update-counsellor.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Counsellor } from './entities/counsellor.entity';
 import { Repository } from 'typeorm';
+import { User, UserRole } from 'src/user/entities/user.entity';
 
 @Injectable()
 export class CounsellorService {
   constructor(
   @InjectRepository(Counsellor)
   private readonly counsellorRepository: Repository<Counsellor>,
+  @InjectRepository(User)
+  private readonly userRepository: Repository<User>
 ) {}
   async create(createCounsellorDto: CreateCounsellorDto) {
-    const existing = await this.counsellorRepository.findOneBy({
+    const existing = await this.userRepository.findOneBy({
       email: createCounsellorDto.email,
       mobile: createCounsellorDto.mobile,
-      employeeId: createCounsellorDto.employeeId,
+      identifier: createCounsellorDto.employeeId,
     });
 
     if (existing) {
       throw new BadRequestException(
-        "Counsellor with email , mobile number or employee ID already exists"
+        "User with email , mobile number or employee ID already exists"
       );
     }
- const counsellor = this.counsellorRepository.create(createCounsellorDto);
-  return await this.counsellorRepository.save(counsellor);  }
+
+    const user = await this.userRepository.save({
+      email: createCounsellorDto.email,
+      mobile: createCounsellorDto.mobile,
+      identifier: createCounsellorDto.employeeId,
+      role: UserRole.COUNSELLOR,
+    });
+
+    const counsellor = this.counsellorRepository.create({
+      ...createCounsellorDto,
+      userId: user.id,
+    });
+      return await this.counsellorRepository.save(counsellor);  }
 
   async findAll() {
   const counsellors = await this.counsellorRepository.find();

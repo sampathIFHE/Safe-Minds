@@ -38,7 +38,7 @@ export class CreateCounsellorDto {
   @IsString()
   location?: string;
 
-  @IsOptional()
-  @IsString()
-  otp?: string;
+    @IsString()
+  userId:string;
+
 }

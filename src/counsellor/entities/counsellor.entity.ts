@@ -1,4 +1,5 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { User } from "src/user/entities/user.entity";
+import { Column, CreateDateColumn, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
 @Entity('counsellors')
 export class Counsellor {
@@ -26,6 +27,10 @@ export class Counsellor {
   })
   gender!: string;
 
+  @OneToOne(() => User)
+  @JoinColumn()
+  user: User;
+
   @Column({ default: true })
   isActive!: boolean;
 
@@ -41,6 +46,6 @@ export class Counsellor {
   @UpdateDateColumn()
   updatedAt!: Date;
 
-  @Column({ nullable: true })
-  otp?: string;
+  @Column()
+  userId: string
 }

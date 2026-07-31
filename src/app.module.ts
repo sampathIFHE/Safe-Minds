@@ -6,6 +6,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { CounsellorModule } from './counsellor/counsellor.module';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
+import { SessionsModule } from './sessions/sessions.module';
 @Module({
   imports: [ // Load environment variables from .env
     ConfigModule.forRoot({
@@ -29,7 +30,8 @@ import { UserModule } from './user/user.module';
 
     CounsellorModule,
     AuthModule,
-    UserModule,],
+    UserModule,
+    SessionsModule,],
   controllers: [AppController],
   providers: [AppService],
 })

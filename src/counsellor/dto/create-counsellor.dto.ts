@@ -41,4 +41,10 @@ export class CreateCounsellorDto {
     @IsString()
   userId:string;
 
+  @IsOptional()
+  sessionDuration?: number;
+
+  @IsOptional()
+  bufferTime?: number;
+
 }

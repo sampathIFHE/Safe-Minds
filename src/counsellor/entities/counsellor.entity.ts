@@ -47,5 +47,11 @@ export class Counsellor {
   updatedAt!: Date;
 
   @Column()
-  userId: string
+  userId: string;
+
+  @Column ({default:45})
+  sessionDuration: number;
+
+  @Column({default:45})
+  bufferTime: number;
 }

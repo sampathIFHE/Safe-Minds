@@ -1,10 +1,11 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { UpdateSessionDto } from './dto/update-session.dto';
 import { Repository } from 'typeorm';
 import { Session, SessionStatus } from './entities/session.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Counsellor } from 'src/counsellor/entities/counsellor.entity';
+import { CounsellorService } from 'src/counsellor/counsellor.service';
 
 @Injectable()
 export class SessionsService {
@@ -13,7 +14,10 @@ export class SessionsService {
       @InjectRepository(Session)
       private readonly sessionsRepository: Repository<Session>,
       @InjectRepository(Counsellor)
-      private readonly counsellorRepository: Repository<Counsellor>
+      private readonly counsellorRepository: Repository<Counsellor>,
+      @Inject(forwardRef(() => CounsellorService))
+      private readonly counsellorService: CounsellorService,
+
     ) {}
 
 
@@ -41,9 +45,20 @@ export class SessionsService {
       },
     });
 
+    const blockCheck = await this.counsellorService.checkCounsellorBlock(
+      createSessionDto.counsellorId,
+      createSessionDto.scheduledStartTime,
+      createSessionDto.scheduledEndTime,
+    );
+  
+    if (!blockCheck.available) {
+      throw new BadRequestException(blockCheck.message);
+    }
+
     const hasConflict = existingSessions.some((session) => {
       if (
-        session.status === SessionStatus.CANCELLED ||
+        session.status === SessionStatus.CANCELLED_BY_CLIENT ||
+        session.status === SessionStatus.CANCELLED_BY_COUNSELLOR ||
         session.status === SessionStatus.COMPLETED
       ) {
         return false;

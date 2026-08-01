@@ -8,7 +8,7 @@ import {
   IsUUID,
   Min,
 } from 'class-validator';
-import { SessionStatus } from '../entities/session.entity';
+import { SessionStatus, SessionType } from '../entities/session.entity';
 
 export class CreateSessionDto {
   @IsOptional()
@@ -60,4 +60,8 @@ export class CreateSessionDto {
   @IsInt()
   @Min(1)
   Severity?: number;
+
+  @IsOptional()
+  @IsEnum(SessionType)
+  type:SessionType
 }

@@ -8,9 +8,15 @@ import {
 export enum SessionStatus {
   BOOKED = 'BOOKED',
   COMPLETED = 'COMPLETED',
-  CANCELLED = 'CANCELLED',
-  MISSED = 'MISSED',
+  CANCELLED_BY_CLIENT = "CANCELLED_BY_CLIENT",
+  CANCELLED_BY_COUNSELLOR = "CANCELLED_BY_COUNSELLOR",
+  NO_SHOW = "NO_SHOW",
   RESCHEDULED = 'RESCHEDULED',
+  ONGOING ='ONGOING'
+}
+export enum SessionType {
+  WALK_IN = "WALK_IN",
+  ONLINE = "ONLINE"
 }
 @Entity('sessions')
 export class Session {
@@ -31,4 +37,5 @@ export class Session {
   @UpdateDateColumn() updatedAt: Date;
   @Column({ nullable: true }) statusReason?: string;
   @Column({ nullable: true }) Severity?: number;
+  @Column({type:'enum', enum:SessionType, default:SessionType.WALK_IN})type:string
 }

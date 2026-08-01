@@ -110,7 +110,7 @@ export class CounsellorService {
       reason: dto.reason,
     });
 
-    return this.blockRepository.save(block);
+    return await this.blockRepository.save(block);
   }
 
   async checkCounsellorBlock(
@@ -214,7 +214,7 @@ export class CounsellorService {
     if (dto.reason) {
       block.reason = dto.reason;
     }
-    return this.blockRepository.save(block);
+    return await this.blockRepository.save(block);
   }
 
   async deleteBlock( blockId: string) {

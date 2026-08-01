@@ -13,13 +13,13 @@ export class UserService {
   ) {}
 
     async findByEmail(email: string) {
-    return this.userRepository.findOne({
+    return await this.userRepository.findOne({
       where: { email },
     });
   }
 
   async save(user: User) {
-    return this.userRepository.save(user);
+    return await this.userRepository.save(user);
   }
   
   create(createUserDto: CreateUserDto) {
@@ -51,7 +51,7 @@ export class UserService {
       throw new BadRequestException("User not found");
     }
     Object.assign(user, updateUserDto);
-    return this.userRepository.save(user);
+    return await this.userRepository.save(user);
   }
 
  async remove(id: string) {

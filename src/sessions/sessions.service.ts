@@ -141,7 +141,7 @@ export class SessionsService {
       throw new NotFoundException(`Session with ID ${id} not found.`);
     }
     Object.assign(session, updateSessionDto);
-    return this.sessionsRepository.save(session);
+    return await this.sessionsRepository.save(session);
   }
 
  async remove(id: string) {

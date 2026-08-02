@@ -64,4 +64,12 @@ export class CreateSessionDto {
   @IsOptional()
   @IsEnum(SessionType)
   type:SessionType
+
+  @IsOptional()
+  @IsString()
+  clientName?:string
+
+  @IsOptional()
+  @IsString()
+  counsellorName?:string
 }

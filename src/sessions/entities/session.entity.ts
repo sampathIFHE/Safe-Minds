@@ -21,8 +21,10 @@ export enum SessionType {
 @Entity('sessions')
 export class Session {
   @PrimaryGeneratedColumn('uuid') id!: string;
+  @Column({nullable:true})clientName?:string
   @Column({ nullable: true }) clientId?: string;
   @Column() counsellorId!: string;
+  @Column() counsellorName!:string;
   @Column({ type: 'timestamp' }) scheduledStartTime!: Date;
   @Column({ type: 'timestamp' }) scheduledEndTime!: Date;
   @Column({ type: 'timestamp', nullable: true }) actualStartTime?: Date;

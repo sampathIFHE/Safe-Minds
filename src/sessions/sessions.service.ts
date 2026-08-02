@@ -6,6 +6,7 @@ import { Session, SessionStatus } from './entities/session.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Counsellor } from 'src/counsellor/entities/counsellor.entity';
 import { CounsellorService } from 'src/counsellor/counsellor.service';
+import { Client } from 'src/client/entities/client.entity';
 
 @Injectable()
 export class SessionsService {
@@ -17,7 +18,8 @@ export class SessionsService {
       private readonly counsellorRepository: Repository<Counsellor>,
       @Inject(forwardRef(() => CounsellorService))
       private readonly counsellorService: CounsellorService,
-
+      @InjectRepository(Client)
+      private readonly clientRepository:Repository<Client>
     ) {}
 
 
@@ -30,6 +32,29 @@ export class SessionsService {
       throw new NotFoundException('Counsellor not found.');
     }
 
+    const client = await this.clientRepository.findOne({
+      where:{id:createSessionDto.clientId}
+    })
+    
+    if(!client){
+      throw new NotFoundException('Client not found.');
+    }
+
+    const existingClinetSessions = await this.sessionsRepository.find({
+      where:[
+        {
+          clientId:createSessionDto.clientId,
+          status:SessionStatus.BOOKED
+        },
+        {
+          clientId:createSessionDto.clientId,
+          status:SessionStatus.ONGOING
+        }
+      ]
+     });
+    if(existingClinetSessions.length>0){
+     throw new BadRequestException("You can't book a session when you are not completed the previous session")
+    }
     // Calculate end time from session duration
     const scheduledStartTime = new Date(createSessionDto.scheduledStartTime);
 
@@ -47,8 +72,8 @@ export class SessionsService {
 
     const blockCheck = await this.counsellorService.checkCounsellorBlock(
       createSessionDto.counsellorId,
-      createSessionDto.scheduledStartTime,
-      createSessionDto.scheduledEndTime,
+      scheduledStartTime,
+      scheduledEndTime,
     );
   
     if (!blockCheck.available) {
@@ -104,6 +129,8 @@ export class SessionsService {
       scheduledEndTime,
       sessionNumber,
       status: SessionStatus.BOOKED,
+      counsellorName:`${counsellor.firstName} ${counsellor.lastName}`,
+      clientName:`${client.firstName} ${client.lastName}`
     });
 
     return await this.sessionsRepository.save(session);

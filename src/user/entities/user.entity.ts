@@ -3,7 +3,7 @@ import { Entity, PrimaryGeneratedColumn, Column } from "typeorm";
 export enum UserRole {
   ADMIN = "ADMIN",
   COUNSELLOR = "COUNSELLOR",
-  STUDENT = "STUDENT",
+  CLIENT = "CLIENT",
 }
 
 @Entity()
@@ -17,11 +17,11 @@ export class User {
   @Column({default: ""})
   lastName: string;
 
-  @Column({ unique: true })
-  email: string;
+  @Column({ unique: true , nullable:true})
+  email?: string;
 
-  @Column({ unique: true })
-  mobile: string;
+  @Column({ unique: true , nullable:true })
+  mobile?: string;
 
   @Column({ unique: true })
   identifier: string;

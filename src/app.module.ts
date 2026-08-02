@@ -7,6 +7,7 @@ import { CounsellorModule } from './counsellor/counsellor.module';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { SessionsModule } from './sessions/sessions.module';
+import { ClientModule } from './client/client.module';
 @Module({
   imports: [ // Load environment variables from .env
     ConfigModule.forRoot({
@@ -31,7 +32,8 @@ import { SessionsModule } from './sessions/sessions.module';
     CounsellorModule,
     AuthModule,
     UserModule,
-    SessionsModule,],
+    SessionsModule,
+    ClientModule,],
   controllers: [AppController],
   providers: [AppService],
 })

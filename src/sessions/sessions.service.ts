@@ -7,9 +7,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Counsellor } from 'src/counsellor/entities/counsellor.entity';
 import { CounsellorService } from 'src/counsellor/counsellor.service';
 import { Client } from 'src/client/entities/client.entity';
+import * as nodemailer from 'nodemailer';
+import { join } from 'path';
+import { clientSessionTemplate } from 'src/mailTemplates/client-session-booked.template';
+
 
 @Injectable()
 export class SessionsService {
+   private transporter;
 
   constructor(
       @InjectRepository(Session)
@@ -20,7 +25,15 @@ export class SessionsService {
       private readonly counsellorService: CounsellorService,
       @InjectRepository(Client)
       private readonly clientRepository:Repository<Client>
-    ) {}
+    ) {
+          this.transporter = nodemailer.createTransport({
+            service: "gmail",
+            auth: {
+              user: process.env.MAIL_USER,
+              pass: process.env.MAIL_PASS,
+            },
+          });
+    }
 
 
  async create(createSessionDto: CreateSessionDto) {
@@ -63,13 +76,36 @@ export class SessionsService {
       scheduledEndTime.getMinutes() + counsellor.sessionDuration,
     );
 
-    // Existing active sessions
-    const existingSessions = await this.sessionsRepository.find({
-      where: {
-        counsellorId: counsellor.id,
-      },
-    });
+    const requestedEndTime = new Date(scheduledEndTime);
+requestedEndTime.setMinutes(
+  requestedEndTime.getMinutes() + counsellor.bufferTime,
+);
 
+    // Existing active sessions
+const existingSession = await this.sessionsRepository
+  .createQueryBuilder('session')
+  .where('session.counsellorId = :counsellorId', {
+    counsellorId: counsellor.id,
+  })
+  .andWhere(
+    `
+    session.scheduledStartTime < :requestedEnd
+    AND
+    (session.scheduledEndTime + (:bufferTime * INTERVAL '1 minute')) > :requestedStart
+    `,
+    {
+      requestedStart: scheduledStartTime,
+      requestedEnd: scheduledEndTime,
+      bufferTime: counsellor.bufferTime,
+    },
+  )
+  .getOne();
+
+if (existingSession) {
+  throw new BadRequestException(
+    'Counsellor is not available for the selected time.',
+  );
+}
     const blockCheck = await this.counsellorService.checkCounsellorBlock(
       createSessionDto.counsellorId,
       scheduledStartTime,
@@ -80,34 +116,6 @@ export class SessionsService {
       throw new BadRequestException(blockCheck.message);
     }
 
-    const hasConflict = existingSessions.some((session) => {
-      if (
-        session.status === SessionStatus.CANCELLED_BY_CLIENT ||
-        session.status === SessionStatus.CANCELLED_BY_COUNSELLOR ||
-        session.status === SessionStatus.COMPLETED
-      ) {
-        return false;
-      }
-
-      const existingStart = new Date(session.scheduledStartTime);
-
-      // Existing session occupies its duration + buffer
-      const existingEnd = new Date(session.scheduledEndTime);
-      existingEnd.setMinutes(
-        existingEnd.getMinutes() + counsellor.bufferTime,
-      );
-
-      return (
-        scheduledStartTime < existingEnd &&
-        scheduledEndTime > existingStart
-      );
-    });
-
-    if (hasConflict) {
-      throw new BadRequestException(
-        'Counsellor is not available for the selected time.',
-      );
-    }
 
     // Determine session number for the client
     let sessionNumber = 1;
@@ -133,7 +141,78 @@ export class SessionsService {
       clientName:`${client.firstName} ${client.lastName}`
     });
 
+ function formatSessionTime(
+  scheduledStartTime: Date | string,
+  sessionDuration: number,
+) {
+  const startDate = new Date(scheduledStartTime);
+
+  if (isNaN(startDate.getTime())) {
+    throw new Error('Invalid session start time');
+  }
+
+  const endDate = new Date(startDate);
+  endDate.setMinutes(endDate.getMinutes() + sessionDuration);
+
+  const formatDate = (date: Date) =>
+    date.toLocaleDateString('en-IN', {
+    timeZone: "Asia/Kolkata",
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+    });
+
+  const formatTime = (date: Date) =>
+    date.toLocaleTimeString('en-IN', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
+
+  return {
+    date: formatDate(startDate),
+    startTime: formatTime(startDate),
+    endTime: formatTime(endDate),
+  };
+}
+
+formatSessionTime(createSessionDto.scheduledStartTime, counsellor.sessionDuration);
+const { date: sessionDate, startTime, endTime } = formatSessionTime(
+  createSessionDto.scheduledStartTime,
+  counsellor.sessionDuration,
+);
+      await this.transporter.sendMail({
+          from: `"Safe Minds" <${process.env.MAIL_USER}>`,
+          to: client.email,
+          subject:  `Hello ${client.firstName} ${client.lastName}, Your Safe Minds counselling session is confirmed`,
+          html:clientSessionTemplate(
+    `${client.firstName} ${client.lastName}`,
+    `${counsellor.firstName} ${counsellor.lastName}`,
+    counsellor.location || '',
+    sessionDate,
+    startTime,
+    endTime,
+    session.type,
+  ),
+          attachments: [
+        {
+          filename: 'Safe_Minds_Logo.png',
+          path: join(process.cwd(), 'public', 'Safe_Minds_Logo.png'),
+          cid: 'safe-minds-logo',
+        },
+      ],
+        });
+    
     return await this.sessionsRepository.save(session);
+  }
+
+async removeAll() {
+    const sessions = await this.sessionsRepository.find();
+    if (!sessions || sessions.length === 0) {
+      throw new NotFoundException('No sessions found to delete.');
+    }
+    await this.sessionsRepository.remove(sessions);
+    return { message: 'All sessions have been deleted.' };
   }
 
   async getsessionsByCounsellor(counsellorId: string) {

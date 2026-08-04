@@ -29,7 +29,7 @@ export class Session {
   @Column({ type: 'timestamp' }) scheduledEndTime!: Date;
   @Column({ type: 'timestamp', nullable: true }) actualStartTime?: Date;
   @Column({ type: 'timestamp', nullable: true }) actualEndTime?: Date;
-  @Column({ default: false }) requiresBuffer: boolean;
+  @Column({ default: true }) requiresBuffer: boolean;
   @Column({ type: 'enum', enum: SessionStatus, default: SessionStatus.BOOKED })
   status!: SessionStatus;
   @Column({ nullable: true }) sessionSummary?: string;

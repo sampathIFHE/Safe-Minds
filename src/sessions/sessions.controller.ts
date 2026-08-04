@@ -31,4 +31,9 @@ export class SessionsController {
   remove(@Param('id') id: string) {
     return this.sessionsService.remove(id);
   }
+
+  @Delete()
+  removeAll(){
+    return this.sessionsService.removeAll();
+  }
 }

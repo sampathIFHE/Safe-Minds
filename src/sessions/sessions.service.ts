@@ -10,6 +10,7 @@ import { Client } from 'src/client/entities/client.entity';
 import * as nodemailer from 'nodemailer';
 import { join } from 'path';
 import { clientSessionTemplate } from 'src/mailTemplates/client-session-booked.template';
+import { counsellorSessionTemplate } from 'src/mailTemplates/counsellor-session-booked.template';
 
 
 @Injectable()
@@ -80,7 +81,27 @@ export class SessionsService {
 requestedEndTime.setMinutes(
   requestedEndTime.getMinutes() + counsellor.bufferTime,
 );
+// Format for email
+const sessionDate = scheduledStartTime.toLocaleDateString("en-IN", {
+  timeZone: "Asia/Kolkata",
+  day: "2-digit",
+  month: "long",
+  year: "numeric",
+});
 
+const startTime = scheduledStartTime.toLocaleTimeString("en-IN", {
+  timeZone: "Asia/Kolkata",
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: true,
+});
+
+const endTime = scheduledEndTime.toLocaleTimeString("en-IN", {
+  timeZone: "Asia/Kolkata",
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: true,
+});
     // Existing active sessions
 const existingSession = await this.sessionsRepository
   .createQueryBuilder('session')
@@ -141,46 +162,6 @@ if (existingSession) {
       clientName:`${client.firstName} ${client.lastName}`
     });
 
- function formatSessionTime(
-  scheduledStartTime: Date | string,
-  sessionDuration: number,
-) {
-  const startDate = new Date(scheduledStartTime);
-
-  if (isNaN(startDate.getTime())) {
-    throw new Error('Invalid session start time');
-  }
-
-  const endDate = new Date(startDate);
-  endDate.setMinutes(endDate.getMinutes() + sessionDuration);
-
-  const formatDate = (date: Date) =>
-    date.toLocaleDateString('en-IN', {
-    timeZone: "Asia/Kolkata",
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric',
-    });
-
-  const formatTime = (date: Date) =>
-    date.toLocaleTimeString('en-IN', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true,
-    });
-
-  return {
-    date: formatDate(startDate),
-    startTime: formatTime(startDate),
-    endTime: formatTime(endDate),
-  };
-}
-
-formatSessionTime(createSessionDto.scheduledStartTime, counsellor.sessionDuration);
-const { date: sessionDate, startTime, endTime } = formatSessionTime(
-  createSessionDto.scheduledStartTime,
-  counsellor.sessionDuration,
-);
       await this.transporter.sendMail({
           from: `"Safe Minds" <${process.env.MAIL_USER}>`,
           to: client.email,
@@ -193,6 +174,32 @@ const { date: sessionDate, startTime, endTime } = formatSessionTime(
     startTime,
     endTime,
     session.type,
+  ),
+          attachments: [
+        {
+          filename: 'Safe_Minds_Logo.png',
+          path: join(process.cwd(), 'public', 'Safe_Minds_Logo.png'),
+          cid: 'safe-minds-logo',
+        },
+      ],
+        });
+
+              await this.transporter.sendMail({
+          from: `"Safe Minds" <${process.env.MAIL_USER}>`,
+          to: counsellor.email,
+          subject:  `New Counselling Session Assigned – ${client.firstName} ${client.lastName}`,
+          html:counsellorSessionTemplate (
+    `${counsellor.firstName} ${counsellor.lastName}`,
+    `${client.firstName} ${client.lastName}`,
+    session.sessionNumber,
+    sessionDate,
+    startTime,
+    endTime,
+    session.type,
+    client.department || '',
+    client.school || '',
+    client.batch || '',
+    client.referredBy || ''
   ),
           attachments: [
         {

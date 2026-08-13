@@ -26,8 +26,7 @@ export class AuthService {
   }
 
   async sendOtp(dto: SendOtpDto) {
-
-  const user = await this.userService.findByEmail(dto.email);
+  const user = await this.userService.findByEmailOrIdentifier(dto.email);
 
   if (!user) {
     throw new NotFoundException("User not found");
@@ -48,7 +47,7 @@ export class AuthService {
   const logoUrl = `${process.env.APP_URL}/Safe_Minds_Logo.png`;
   await this.transporter.sendMail({
       from: `"Safe Minds" <${process.env.MAIL_USER}>`,
-      to: dto.email,
+      to: user.email,
       subject:  `Hello ${user.firstName} ${user.lastName}, here's your Safe Minds verification code`,
       html: otpTemplate(`${user.firstName} ${user.lastName}`, otp, logoUrl),
       attachments: [
@@ -67,7 +66,7 @@ export class AuthService {
 
 async verifyOtp(dto: VerifyOtpDto) {
 
-  const user = await this.userService.findByEmail(dto.email);
+  const user = await this.userService.findByEmailOrIdentifier(dto.email);
 
   if (!user) {
     throw new UnauthorizedException();
@@ -89,7 +88,7 @@ async verifyOtp(dto: VerifyOtpDto) {
   user.otpExpiresAt = null;
   user.isVerified = true;
 
-  await this.userService.save(user);
+  // await this.userService.save(user);
 
   const payload = {
     sub: user.id,

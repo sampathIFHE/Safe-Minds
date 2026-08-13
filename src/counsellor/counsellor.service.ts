@@ -135,22 +135,18 @@ export class CounsellorService {
           endTime,
         },
       );
-  
     if (excludeBlockId) {
       query.andWhere("block.id != :excludeBlockId", {
         excludeBlockId,
       });
     }
-  
     const block = await query.getOne();
-  
     if (block) {
       return {
         available: false,
         message: "Counsellor already has a block during this time",
       };
     }
-  
     return {
       available: true,
     };
@@ -269,6 +265,12 @@ export class CounsellorService {
     if (!counsellor) {
       throw new BadRequestException("Counsellor not found");
     }
+    const user = await this.userRepository.findOne({
+      where: { id: counsellor.userId },
+    });
+    if (user) {
+      await this.userRepository.remove(user);
+    }
     return await this.counsellorRepository.remove(counsellor);
   }
 
@@ -277,6 +279,14 @@ export class CounsellorService {
     if(!counsellors || counsellors.length == 0){
       throw new BadRequestException("Counsellor not found");
     }
+    counsellors.forEach(async (counsellor) => {
+      const user = await this.userRepository.findOne({
+        where: { id: counsellor.userId },
+      });
+      if (user) {
+        await this.userRepository.remove(user);
+      }
+    });
     await this.counsellorRepository.remove(counsellors);
   
     return {message:"All the counsellors are removed."}

@@ -12,10 +12,13 @@ export class UserService {
     private readonly userRepository: Repository<User>,
   ) {}
 
-    async findByEmail(email: string) {
-    return await this.userRepository.findOne({
-      where: { email },
-    });
+    async findByEmailOrIdentifier(value: string) {
+     return this.userRepository.findOne({
+    where: [
+      { email: value },
+      { identifier: value },
+    ],
+  });
   }
 
   async save(user: User) {

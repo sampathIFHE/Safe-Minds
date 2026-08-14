@@ -38,4 +38,8 @@ export class ClientController {
     return this.clientService.remove(id);
   }
 
+  @Get('/dashboard/:id')
+  getClientDashboard(@Param('id') id: string) {
+    return this.clientService.getClientDashboard(id);
+  }
 }

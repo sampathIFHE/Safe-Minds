@@ -12,7 +12,8 @@ export enum SessionStatus {
   CANCELLED_BY_COUNSELLOR = "CANCELLED_BY_COUNSELLOR",
   NO_SHOW = "NO_SHOW",
   RESCHEDULED = 'RESCHEDULED',
-  ONGOING ='ONGOING'
+  ONGOING ='ONGOING',
+
 }
 export enum SessionType {
   WALK_IN = "WALK_IN",
@@ -30,8 +31,7 @@ export class Session {
   @Column({ type: 'timestamp', nullable: true }) actualStartTime?: Date;
   @Column({ type: 'timestamp', nullable: true }) actualEndTime?: Date;
   @Column({ default: true }) requiresBuffer: boolean;
-  @Column({ type: 'enum', enum: SessionStatus, default: SessionStatus.BOOKED })
-  status!: SessionStatus;
+  @Column({ type: 'enum', enum: SessionStatus, default: SessionStatus.BOOKED })status!: SessionStatus;
   @Column({ nullable: true }) sessionSummary?: string;
   @Column() sessionNumber!: number;
   @Column({ type: 'text', nullable: true }) notes?: string;
@@ -39,5 +39,6 @@ export class Session {
   @UpdateDateColumn() updatedAt: Date;
   @Column({ nullable: true }) statusReason?: string;
   @Column({ nullable: true }) Severity?: number;
-  @Column({type:'enum', enum:SessionType, default:SessionType.WALK_IN})type:string
+  @Column({type:'enum', enum:SessionType, default:SessionType.WALK_IN})bookingtype:string
+  @Column({ type: 'timestamp', nullable: true })previousScheduledStartTime?: Date;
 }

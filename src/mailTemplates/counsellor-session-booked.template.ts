@@ -10,17 +10,60 @@ export const counsellorSessionTemplate = (
   school?: string,
   batch?: string,
   referredBy?: string,
-) => `
+  sessionAction: "BOOKED" | "RESCHEDULED" = "BOOKED",
+) => {
+  const isRescheduled = sessionAction === "RESCHEDULED";
+
+  const heading = isRescheduled
+    ? "Counselling Session Rescheduled 🔄"
+    : "New Counselling Session Scheduled 💙";
+
+  const introMessage = isRescheduled
+    ? `
+      A counselling session assigned to you has been rescheduled.
+      Please find the updated session details below.
+    `
+    : `
+      A new counselling session has been successfully scheduled and assigned to you.
+      Please find the session details below.
+    `;
+
+  const sessionStatus = isRescheduled
+    ? "Session Rescheduled"
+    : "Session Scheduled";
+
+  const detailsHeading = isRescheduled
+    ? "Updated Session Details"
+    : "Session Details";
+
+  const availabilityMessage = isRescheduled
+    ? `
+      Please make a note of the updated date and time and be available
+      a few minutes before the scheduled session.
+    `
+    : `
+      Please be available a few minutes before the scheduled time
+      and be prepared for the counselling session.
+    `;
+
+  return `
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Safe Minds - New Session Assigned</title>
+<title>
+Safe Minds - ${isRescheduled ? "Session Rescheduled" : "New Session Assigned"}
+</title>
 </head>
 
-<body style="margin:0;padding:0;background:#f4f8fc;font-family:Arial,Helvetica,sans-serif;">
+<body style="
+margin:0;
+padding:0;
+background:#f4f8fc;
+font-family:Arial,Helvetica,sans-serif;
+">
 
 <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px;">
 <tr>
@@ -56,6 +99,7 @@ padding:10px;
 </td>
 </tr>
 
+
 <!-- Body -->
 <tr>
 <td style="padding:45px;">
@@ -65,8 +109,9 @@ margin:0;
 color:#0D4D8B;
 font-size:18px;
 ">
-New Counselling Session Scheduled 💙
+${heading}
 </h2>
+
 
 <p style="
 margin-top:30px;
@@ -77,14 +122,67 @@ line-height:28px;
 Hello <strong>${counsellorName}</strong>,
 </p>
 
+
 <p style="
 font-size:16px;
 color:#555;
 line-height:28px;
 ">
-A new counselling session has been successfully scheduled and assigned to you.
-Please find the session details below.
+${introMessage}
 </p>
+
+
+<!-- Status Card -->
+
+<table width="100%" cellpadding="0" cellspacing="0"
+style="
+margin-top:30px;
+background:#F3F8FF;
+border-radius:16px;
+">
+
+<tr>
+<td style="
+padding:25px;
+text-align:center;
+">
+
+<div style="
+font-size:14px;
+color:#667085;
+margin-bottom:8px;
+">
+Session Status
+</div>
+
+<div style="
+font-size:20px;
+font-weight:bold;
+color:#0D4D8B;
+">
+${sessionStatus}
+</div>
+
+<p style="
+margin:10px 0 0;
+font-size:14px;
+color:#667085;
+line-height:22px;
+">
+${
+  isRescheduled
+    ? "The session time has been updated. Please refer to the details below."
+    : "A new session has been assigned to you."
+}
+</p>
+
+</td>
+</tr>
+
+</table>
+
+
+<!-- Client Details -->
 
 <h3 style="
 margin-top:40px;
@@ -93,6 +191,7 @@ font-size:20px;
 ">
 Client Details
 </h3>
+
 
 <table width="100%" cellpadding="0" cellspacing="0"
 style="
@@ -130,13 +229,17 @@ ${referredBy ? `<br>👤 <strong>Referred By:</strong> ${referredBy}` : ""}
 
 </table>
 
+
+<!-- Session Details -->
+
 <h3 style="
 margin-top:40px;
 color:#0D4D8B;
 font-size:20px;
 ">
-Session Details
+${detailsHeading}
 </h3>
+
 
 <table width="100%" cellpadding="0" cellspacing="0"
 style="
@@ -160,12 +263,12 @@ line-height:32px;
 
 <br>
 
-💻 <strong>Mode:</strong> ${type}
 
 </td>
 </tr>
 
 </table>
+
 
 <p style="
 margin-top:35px;
@@ -173,14 +276,16 @@ font-size:16px;
 color:#555;
 line-height:28px;
 ">
-Please be available a few minutes before the scheduled time and be prepared for the counselling session.
+${availabilityMessage}
 </p>
+
 
 <hr style="
 margin:40px 0;
 border:none;
 border-top:1px solid #e6edf5;
 ">
+
 
 <h3 style="
 color:#0D4D8B;
@@ -189,6 +294,7 @@ margin-bottom:5px;
 ">
 Helping Every Mind Heal
 </h3>
+
 
 <p style="
 text-align:center;
@@ -200,6 +306,7 @@ margin-top:0;
 Book • Talk • Heal • Grow
 </p>
 
+
 <p style="
 font-size:16px;
 color:#555;
@@ -208,8 +315,10 @@ text-align:center;
 margin-top:30px;
 ">
 Thank you for being a valued counsellor with
-<strong>Safe Minds</strong> and for supporting our clients on their wellness journey.
+<strong>Safe Minds</strong> and for supporting our clients
+on their wellness journey.
 </p>
+
 
 <p style="
 font-size:16px;
@@ -227,6 +336,7 @@ The Safe Minds Team
 
 </p>
 
+
 </td>
 </tr>
 
@@ -239,3 +349,4 @@ The Safe Minds Team
 </body>
 </html>
 `;
+};

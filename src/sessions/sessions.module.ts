@@ -7,12 +7,13 @@ import { Counsellor } from 'src/counsellor/entities/counsellor.entity';
 import { CounsellorModule } from 'src/counsellor/counsellor.module';
 import { ClientModule } from 'src/client/client.module';
 import { Client } from 'src/client/entities/client.entity';
+import { CounsellorBlock } from 'src/counsellor/entities/counsellor-block.entity';
 
 
 @Module({
   imports: [  forwardRef(() => CounsellorModule),
     ClientModule,
-    TypeOrmModule.forFeature([Session, Counsellor, Client])],
+    TypeOrmModule.forFeature([Session, Counsellor, Client, CounsellorBlock])],
   controllers: [SessionsController],
   providers: [SessionsService],
 })

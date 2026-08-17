@@ -54,4 +54,10 @@ export class Counsellor {
 
   @Column({default:45})
   bufferTime: number;
+
+  @Column({ type: "text", array: true, nullable: true })
+  languages: string[];
+
+  @Column({nullable:true})
+  school:string
 }

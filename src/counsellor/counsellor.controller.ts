@@ -30,7 +30,7 @@ export class CounsellorController {
   }
 
   @Get()
-  @UseGuards(AuthGuard('jwt'))
+  // @UseGuards(AuthGuard('jwt'))
   findAll() {
     return this.counsellorService.findAll();
   }
@@ -60,7 +60,7 @@ export class CounsellorController {
   }
 
   @Patch(':id')
-  @UseGuards(AuthGuard('jwt'))
+  // @UseGuards(AuthGuard('jwt'))
   update(@Param('id') id: string, @Body() updateCounsellorDto: UpdateCounsellorDto) {
    return this.counsellorService.update(id, updateCounsellorDto);
   }

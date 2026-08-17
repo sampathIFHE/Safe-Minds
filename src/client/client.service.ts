@@ -99,111 +99,179 @@ export class ClientService {
     };
   }
 
-async getClientDashboard(userId: string) {
-  const client = await this.clientRepository.findOne({
-    where: {
-      userId,
-    },
-  });
-
-  if (!client) {
-    throw new NotFoundException("Client not found");
-  }
-
-  let counsellor:any = null;
-
-  if (client.counsellorId) {
-    counsellor = await this.counsellorRepository.findOne({
+  async getClientDashboard(userId: string) {
+    const client = await this.clientRepository.findOne({
       where: {
-        id: client.counsellorId,
+        userId,
       },
     });
+  
+    if (!client) {
+      throw new NotFoundException("Client not found");
+    }
+  
+    // Get assigned counsellor
+    let counsellor: any = null;
+  
+    if (client.counsellorId) {
+      counsellor = await this.counsellorRepository.findOne({
+        where: {
+          id: client.counsellorId,
+        },
+      });
+    }
+  
+    // Get all client sessions
+    const allSessions: any[] = await this.sessionRepository.find({
+      where: {
+        clientId: client.id,
+      },
+      order: {
+        scheduledStartTime: "DESC",
+      },
+    });
+  
+    /*
+     * ---------------------------------------------------------
+     * Ignore cancelled sessions
+     * ---------------------------------------------------------
+     */
+    const sessions = allSessions.filter(
+      (session) =>
+        session.status !== SessionStatus.CANCELLED_BY_CLIENT &&
+        session.status !== SessionStatus.CANCELLED_BY_COUNSELLOR,
+    );
+  
+    const now = new Date();
+  
+    /*
+     * ---------------------------------------------------------
+     * Current / Upcoming Session
+     *
+     * BOOKED
+     * RESCHEDULED
+     * ONGOING
+     *
+     * and session has not ended yet
+     * ---------------------------------------------------------
+     */
+    const currentSession = sessions.find(
+      (session) =>
+        (
+          session.status === SessionStatus.BOOKED ||
+          session.status === SessionStatus.RESCHEDULED ||
+          session.status === SessionStatus.ONGOING
+        ) &&
+        new Date(session.scheduledEndTime) > now,
+    );
+  
+    /*
+     * ---------------------------------------------------------
+     * Previous Booking
+     *
+     * Get the most recent session that happened BEFORE
+     * the current/upcoming session.
+     *
+     * Cancelled sessions are already removed above.
+     * ---------------------------------------------------------
+     */
+  
+    let previousSession:any = null;
+  
+    if (currentSession) {
+      previousSession = sessions.find(
+        (session) =>
+          new Date(session.scheduledEndTime) <=
+            new Date(currentSession.scheduledStartTime),
+      );
+    } else {
+      /*
+       * No upcoming session.
+       *
+       * So get the latest session that has already ended.
+       */
+      previousSession = sessions.find(
+        (session) =>
+          new Date(session.scheduledEndTime) <= now,
+      );
+    }
+  
+    /*
+     * ---------------------------------------------------------
+     * Pending session confirmation
+     *
+     * Session has ended but is still BOOKED / RESCHEDULED.
+     * ---------------------------------------------------------
+     */
+    const pendingSessionConfirmation = sessions.find(
+      (session) =>
+        (
+          session.status === SessionStatus.BOOKED ||
+          session.status === SessionStatus.RESCHEDULED
+        ) &&
+        new Date(session.scheduledEndTime) <= now,
+    );
+  
+    return {
+      client: {
+        id: client.id,
+        name: `${client.firstName} ${client.lastName ?? ""}`.trim(),
+        email: client.email,
+      },
+  
+      counsellor: counsellor
+        ? {
+            assigned: true,
+            id: counsellor.id,
+            name: `${counsellor.firstName} ${counsellor.lastName}`,
+          }
+        : {
+            assigned: false,
+          },
+  
+      currentSession: currentSession
+        ? {
+            hasSession: true,
+            id: currentSession.id,
+            status: currentSession.status,
+            scheduledStartTime:
+              currentSession.scheduledStartTime,
+            scheduledEndTime:
+              currentSession.scheduledEndTime,
+            sessionType: currentSession.bookingtype,
+          }
+        : {
+            hasSession: false,
+          },
+  
+      pendingSessionConfirmation:
+        pendingSessionConfirmation
+          ? {
+              id: pendingSessionConfirmation.id,
+              status: pendingSessionConfirmation.status,
+              scheduledStartTime:
+                pendingSessionConfirmation.scheduledStartTime,
+              scheduledEndTime:
+                pendingSessionConfirmation.scheduledEndTime,
+            }
+          : null,
+  
+      previousSession: previousSession
+        ? {
+            id: previousSession.id,
+            status: previousSession.status,
+            scheduledStartTime:
+              previousSession.scheduledStartTime,
+            scheduledEndTime:
+              previousSession.scheduledEndTime,
+            actualStartTime:
+              previousSession.actualStartTime,
+            actualEndTime:
+              previousSession.actualEndTime,
+          }
+        : null,
+    };
   }
-
-  const sessions:any = await this.sessionRepository.find({
-    where: {
-      clientId: client.id,
-    },
-    order: {
-      scheduledStartTime: "DESC",
-    },
-  });
-
-  const now = new Date();
-
-  const currentSession = sessions.find(
-    (session) =>
-      (session.status === SessionStatus.BOOKED ||
-        session.status === SessionStatus.ONGOING) &&
-      new Date(session.scheduledEndTime) > now,
-  );
-
-  const pendingSessionConfirmation = sessions.find(
-    (session) =>
-      session.status === SessionStatus.BOOKED &&
-      new Date(session.scheduledEndTime) <= now,
-  );
-
-  const previousSession = sessions.find(
-    (session) =>
-      session.status === SessionStatus.COMPLETED ||
-      session.status === SessionStatus.NO_SHOW ||
-      session.status === SessionStatus.RESCHEDULED,
-  );
-
-  return {
-    client: {
-      id: client.id,
-      name: `${client.firstName} ${client.lastName ?? ""}`.trim(),
-      email: client.email,
-    },
-
-    counsellor: counsellor
-      ? {
-          assigned: true,
-          id: counsellor.id,
-          name: counsellor.name,
-        }
-      : {
-          assigned: false,
-        },
-
-    currentSession: currentSession
-      ? {
-          hasSession: true,
-          id: currentSession.id,
-          status: currentSession.status,
-          scheduledStartTime: currentSession.scheduledStartTime,
-          scheduledEndTime: currentSession.scheduledEndTime,
-          sessionType: currentSession.sessionType,
-        }
-      : {
-          hasSession: false,
-        },
-
-    pendingSessionConfirmation: pendingSessionConfirmation
-      ? {
-          id: pendingSessionConfirmation.id,
-          status: pendingSessionConfirmation.status,
-          scheduledStartTime:
-            pendingSessionConfirmation.scheduledStartTime,
-          scheduledEndTime:
-            pendingSessionConfirmation.scheduledEndTime,
-        }
-      : null,
-
-    previousSession: previousSession
-      ? {
-          id: previousSession.id,
-          status: previousSession.status,
-          scheduledStartTime: previousSession.scheduledStartTime,
-          scheduledEndTime: previousSession.scheduledEndTime,
-          actualStartTime: previousSession.actualStartTime,
-          actualEndTime: previousSession.actualEndTime,
-        }
-      : null,
-  };
-}
     
   async search(identifier: string) {
     const user = await this.userRepository.findOne({

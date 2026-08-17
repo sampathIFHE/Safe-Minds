@@ -15,6 +15,11 @@ import {
     ACTIVE = "ACTIVE",
     INACTIVE = "INACTIVE",
   }
+
+  export enum StudentType {
+    DAYSCHOLAR = "DAYSCHOLAR",
+    HOSTELLER = "HOSTELLER"
+  }
   
   @Entity("clients")
   export class Client {
@@ -79,4 +84,12 @@ import {
 
     @Column()
     userId:string;
+
+    @Column({nullable:true})
+    studentType:StudentType
+
+    @Column({default:false})
+    Critical:Boolean
+
+    @Column({ nullable: true }) Severity?: number;
   }

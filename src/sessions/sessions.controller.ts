@@ -36,4 +36,31 @@ export class SessionsController {
   removeAll(){
     return this.sessionsService.removeAll();
   }
-}
+
+  @Get("getCounsellorAvailability/:id")
+  getCounsellorAvailability(@Param('id') id: string) {
+    return this.sessionsService.getCounsellorAvailability(id);
+  }
+
+  @Get("getSessionDetails/:id")
+    getSessionDetails(@Param('id') id: string) {
+      return this.sessionsService.getSessionDetails(id)
+    }
+
+    @Patch("rescheduleSession/:id")
+    rescheduleSession(@Param('id') id: string, @Body() updateSessionDto: UpdateSessionDto) {
+      return this.sessionsService.rescheduleSession(id,updateSessionDto)
+    }
+
+    @Patch("cancelSession/:id")
+    cancelSession(@Param('id') id: string, @Body() data:any) {
+      return this.sessionsService.cancelSession(id,data)
+    }
+
+    @Get("allSections/:id")
+    getAllClientSessions(@Param('id') id: string) {
+      return this.sessionsService.getAllClientSessions(id)
+    }
+
+  }
+
